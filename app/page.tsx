@@ -1,6 +1,7 @@
 "use client";
 
 import Pusher from "pusher-js";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { getApiBaseUrl } from "@/lib/api";
@@ -121,9 +122,9 @@ export default function HomePage() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p>
-          <a href="/login" className="underline">
+          <Link href="/login" className="underline">
             Log in
-          </a>{" "}
+          </Link>{" "}
           to view notifications.
         </p>
       </div>
@@ -134,9 +135,14 @@ export default function HomePage() {
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Notifications</h1>
-        <button onClick={logout} className="rounded border px-3 py-1 text-sm">
-          Log out
-        </button>
+        <div className="flex items-center gap-2">
+          <Link href="/trigger" className="rounded border px-3 py-1 text-sm">
+            Trigger
+          </Link>
+          <button onClick={logout} className="rounded border px-3 py-1 text-sm">
+            Log out
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between text-sm text-zinc-500">

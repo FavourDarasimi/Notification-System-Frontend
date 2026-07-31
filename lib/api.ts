@@ -3,7 +3,7 @@ type Tokens = { access: string; refresh: string };
 let pendingRefresh: Promise<Tokens> | null = null;
 
 export function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 }
 
 function authHeaders(tokens: Tokens | null): Record<string, string> {

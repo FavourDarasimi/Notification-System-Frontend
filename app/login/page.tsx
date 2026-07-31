@@ -1,7 +1,7 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
-import { redirect, useRouter } from "next/navigation";
+import { type FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
@@ -12,9 +12,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (tokens) {
-    redirect("/");
-  }
+  useEffect(() => {
+    if (tokens) {
+      router.replace("/");
+    }
+  }, [tokens, router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
