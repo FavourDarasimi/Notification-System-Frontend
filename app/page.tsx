@@ -27,14 +27,25 @@ function getUserIdFromToken(token: string): number | null {
   }
 }
 
+const PUSHER_LABELS: Record<string, string> = {
+  connected: "pusher · connected",
+  connecting: "pusher · connecting",
+  error: "pusher · error",
+  "not configured": "pusher · not configured",
+  "no user id": "pusher · no user id",
+  "logged out": "pusher · logged out",
+};
+
 export default function HomePage() {
-  const { tokens, logout, apiRequest } = useAuth();
+  const { tokens, apiRequest } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [pusherStatus, setPusherStatus] = useState("connecting");
 
   const refreshList = useCallback(async () => {
+    setLoading(true);
     try {
       const [listData, countData] = await Promise.all([
         apiRequest<{ results?: Notification[] }>("/api/notifications/"),
@@ -45,6 +56,8 @@ export default function HomePage() {
       setError("");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load");
+    } finally {
+      setLoading(false);
     }
   }, [apiRequest]);
 
@@ -103,96 +116,147 @@ export default function HomePage() {
   const markRead = useCallback(
     async (id: string, current: boolean) => {
       if (current) return;
-      await apiRequest(`/api/notifications/${id}/read/`, { method: "PATCH" });
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
       setUnreadCount((c) => Math.max(0, c - 1));
+      try {
+        await apiRequest(`/api/notifications/${id}/read/`, { method: "PATCH" });
+      } catch (err: unknown) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, is_read: false } : n))
+        );
+        setUnreadCount((c) => c + 1);
+        setError(err instanceof Error ? err.message : "Failed to mark read");
+      }
     },
     [apiRequest]
   );
 
   const markAllRead = useCallback(async () => {
-    await apiRequest("/api/notifications/mark-all-read/", { method: "POST" });
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
-  }, [apiRequest]);
+    try {
+      await apiRequest("/api/notifications/mark-all-read/", { method: "POST" });
+    } catch (err: unknown) {
+      refreshList();
+      setError(err instanceof Error ? err.message : "Failed to mark all read");
+    }
+  }, [apiRequest, refreshList]);
 
   if (!tokens) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p>
-          <Link href="/login" className="underline">
-            Log in
-          </Link>{" "}
-          to view notifications.
-        </p>
+      <div className="container page flex flex-1 flex-col justify-center">
+        <div className="empty-state">
+          <p className="empty-state__label">auth required</p>
+          <p className="empty-state__text">
+            <Link href="/login" className="tlink">
+              Sign in
+            </Link>{" "}
+            to view notifications.
+          </p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Notifications</h1>
-        <div className="flex items-center gap-2">
-          <Link href="/trigger" className="rounded border px-3 py-1 text-sm">
-            Trigger
-          </Link>
-          <button onClick={logout} className="rounded border px-3 py-1 text-sm">
-            Log out
-          </button>
-        </div>
-      </div>
+  const pusherLabel = PUSHER_LABELS[pusherStatus] ?? pusherStatus;
+  const pusherLive =
+    pusherStatus === "connected" || pusherStatus === "connecting";
+  const pusherBad = pusherStatus === "error";
 
-      <div className="flex items-center justify-between text-sm text-zinc-500">
-        <span>
-          {unreadCount} unread · pusher: {pusherStatus}
-        </span>
+  return (
+    <div className="container page stack">
+      <section className="status-band" aria-label="Inbox status">
+        <div className="status-band__stat">
+          <span className="status-band__label">Unread</span>
+          <span className="status-band__value">{unreadCount}</span>
+        </div>
+        <div className="status-band__readout">
+          <span className={pusherLive ? "is-live" : pusherBad ? "is-bad" : ""}>
+            {pusherLabel}
+          </span>
+          <span>total · {notifications.length}</span>
+        </div>
+      </section>
+
+      <div className="toolbar">
+        <span className="toolbar__label">Notifications</span>
         <button
+          type="button"
+          className="btn btn--ghost btn--small"
           onClick={markAllRead}
-          className="rounded border px-3 py-1 text-sm"
+          disabled={unreadCount === 0}
         >
           Mark all read
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="panel" role="alert">
+          <p className="field-error">{error}</p>
+          <button type="button" className="btn btn--ghost btn--small" onClick={refreshList}>
+            Retry
+          </button>
+        </div>
+      )}
 
-      <ul className="flex flex-col gap-2">
-        {notifications.map((n) => (
-          <li
-            key={n.id}
-            className="flex items-start justify-between gap-3 rounded border p-3 text-sm"
-          >
-            <div className="min-w-0">
-              <span className="font-medium">{n.notification_type}</span>
-              {" — "}
-              {n.message}
-              <div className="mt-1 text-xs text-zinc-400">
-                {new Date(n.created_at).toLocaleString()}
+      {!error && loading && notifications.length === 0 && (
+        <div aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="skeleton-row" />
+          ))}
+        </div>
+      )}
+
+      {!error && !loading && notifications.length === 0 && (
+        <div className="empty-state">
+          <p className="empty-state__label">Inbox empty</p>
+          <p className="empty-state__text">
+            No notifications yet. Send one from the trigger page.
+          </p>
+          <Link href="/trigger" className="btn btn--ghost btn--small">
+            Trigger one
+          </Link>
+        </div>
+      )}
+
+      {notifications.length > 0 && (
+        <ul className="list">
+          {notifications.map((n) => (
+            <li
+              key={n.id}
+              className={`list-row ${n.is_read ? "" : "is-unread"}`}
+            >
+              <div className="list-row__main">
+                <p className="list-row__message">{n.message}</p>
+                <div className="list-row__meta">
+                  <span className="list-row__type">
+                    {n.notification_type}
+                  </span>
+                  <span className={n.is_read ? "is-read" : ""}>
+                    {n.is_read ? "read" : "new"}
+                  </span>
+                  <span>
+                    {new Date(n.created_at).toLocaleString()}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <span
-                className={`text-xs ${
-                  n.is_read ? "text-zinc-400" : "font-semibold text-blue-600"
-                }`}
-              >
-                {n.is_read ? "read" : "new"}
-              </span>
-              {!n.is_read && (
-                <button
-                  onClick={() => markRead(n.id, n.is_read)}
-                  className="rounded border px-2 py-0.5 text-xs"
-                >
-                  Mark as read
-                </button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+              <div className="list-row__aside">
+                {!n.is_read && (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--small"
+                    onClick={() => markRead(n.id, n.is_read)}
+                  >
+                    Mark read
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

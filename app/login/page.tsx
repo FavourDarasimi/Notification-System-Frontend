@@ -26,52 +26,73 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "Sign-in failed");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <form
-        onSubmit={handleSubmit}
-        className="flex w-80 flex-col gap-4 rounded border p-6"
-      >
-        <h1 className="text-lg font-semibold">Login</h1>
+    <div className="container page flex flex-1 flex-col justify-center">
+      <div className="panel mx-auto w-full max-w-sm">
+        <div className="stack">
+          <div className="page-head">
+            <h1 className="page-head__title">Sign in</h1>
+            <p className="page-head__lede">
+              Access the notification client with your account.
+            </p>
+          </div>
 
-        {error && (
-          <p className="text-sm text-red-600" role="alert">
-            {error}
-          </p>
-        )}
+          <form onSubmit={handleSubmit} className="stack">
+            <div className="field">
+              <label htmlFor="email" className="field-label">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="input"
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <p className="field-help">The email of the account.</p>
+            </div>
 
-        <input
-          type="email"
-          placeholder="Email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border px-3 py-2 text-sm"
-        />
+            <div className="field">
+              <label htmlFor="password" className="field-label">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                className="input"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <p
+                className={error ? "field-error" : "field-help"}
+                role={error ? "alert" : undefined}
+              >
+                {error || "The password for that account."}
+              </p>
+            </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border px-3 py-2 text-sm"
-        />
-
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-50"
-        >
-          {busy ? "Logging in…" : "Log in"}
-        </button>
-      </form>
+            <button
+              type="submit"
+              className="btn btn--primary"
+              disabled={busy}
+              data-state={busy ? "loading" : undefined}
+            >
+              <span className="btn-label">Sign in</span>
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

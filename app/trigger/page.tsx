@@ -48,7 +48,7 @@ export default function TriggerPage() {
       });
       setResult({
         ok: true,
-        text: `Sent "${message}" (${selected}). Watch the / page.`,
+        text: `sent · ${selected} · queued for dispatch`,
       });
     } catch (err: unknown) {
       setResult({
@@ -62,72 +62,90 @@ export default function TriggerPage() {
 
   if (!tokens) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p>
-          <Link href="/login" className="underline">
-            Log in
-          </Link>{" "}
-          to trigger notifications.
-        </p>
+      <div className="container page flex flex-1 flex-col justify-center">
+        <div className="empty-state">
+          <p className="empty-state__label">auth required</p>
+          <p className="empty-state__text">
+            <Link href="/login" className="tlink">
+              Sign in
+            </Link>{" "}
+            to trigger notifications.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Trigger notification</h1>
-        <Link href="/" className="rounded border px-3 py-1 text-sm">
-          ← Notifications
-        </Link>
+    <div className="container page stack">
+      <div className="page-head">
+        <h1 className="page-head__title">Trigger a notification</h1>
+        <p className="page-head__lede">
+          Sends a test notification through the dispatch pipeline to the
+          current user.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Notification type
-          <select
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="border px-3 py-2 text-sm"
-          >
-            {types.length === 0 && <option value="">No types loaded</option>}
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+      <form onSubmit={handleSubmit} className="panel stack">
+        <div className="field">
+          <label htmlFor="type" className="field-label">
+            Notification type
+          </label>
+          <div className="select-wrap">
+            <select
+              id="type"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              disabled={types.length === 0}
+            >
+              {types.length === 0 && <option value="">No types loaded</option>}
+              {types.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="field-help">
+            {types.length === 0
+              ? "No notification types found for this account."
+              : "The registered key of the notification type."}
+          </p>
+        </div>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Message
+        <div className="field">
+          <label htmlFor="message" className="field-label">
+            Message
+          </label>
           <textarea
+            id="message"
+            className="textarea"
+            required
+            placeholder="Hello from the trigger page"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            required
-            rows={3}
-            placeholder="Hello from the trigger page"
-            className="border px-3 py-2 text-sm"
           />
-        </label>
+          <p className="field-help">Shown in the inbox and pushed to the channel.</p>
+        </div>
 
         <button
           type="submit"
+          className="btn btn--primary"
           disabled={busy || types.length === 0}
-          className="rounded bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+          data-state={busy ? "loading" : undefined}
         >
-          {busy ? "Sending…" : "Send"}
+          <span className="btn-label">Send notification</span>
         </button>
-      </form>
 
-      {result && (
-        <p
-          className={`text-sm ${result.ok ? "text-green-700" : "text-red-600"}`}
-          role="status"
-        >
-          {result.text}
-        </p>
-      )}
+        {result && (
+          <p
+            className={result.ok ? "field-help" : "field-error"}
+            role={result.ok ? "status" : "alert"}
+          >
+            {result.text}
+          </p>
+        )}
+      </form>
     </div>
   );
 }

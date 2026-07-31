@@ -1,0 +1,10 @@
+[
+  {
+    "date": "2026-07-31",
+    "macrostructure": "Index-First",
+    "theme": "Cobalt",
+    "enrichment": "none",
+    "scope": "app",
+    "brief": "Notification system client redesign — inbox, trigger tool, sign-in"
+  }
+]

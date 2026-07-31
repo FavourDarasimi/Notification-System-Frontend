@@ -1,21 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { AppHeader } from "@/components/app-header";
 import { AuthProvider } from "@/lib/auth-context";
+import "@/tokens.css";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-body",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Notification Test Client",
-  description: "Minimal test UI for the notification system",
+  title: "Notify — Notification System Client",
+  description: "Test client for the notification system",
 };
 
 export default function RootLayout({
@@ -26,10 +33,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AppHeader />
+          <main className="flex w-full flex-1 flex-col">{children}</main>
+          <footer className="container">
+            <div className="app-footer">
+              Notification System · test client — Pusher + Celery + Django
+            </div>
+          </footer>
+        </AuthProvider>
       </body>
     </html>
   );
