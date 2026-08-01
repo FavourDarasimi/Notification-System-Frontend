@@ -24,6 +24,14 @@ export function AppHeader() {
             Inbox
           </Link>
           <Link
+            href="/rooms"
+            className={`nav-link ${
+              pathname.startsWith("/rooms") ? "is-active" : ""
+            }`}
+          >
+            Rooms
+          </Link>
+          <Link
             href="/trigger"
             className={`nav-link ${pathname === "/trigger" ? "is-active" : ""}`}
           >

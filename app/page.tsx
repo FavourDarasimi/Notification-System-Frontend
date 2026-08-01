@@ -13,6 +13,7 @@ type Notification = {
   notification_type: string;
   priority: string;
   is_read: boolean;
+  room?: string;
   created_at: string;
   read_at: string | null;
 };
@@ -234,6 +235,7 @@ export default function HomePage() {
                   <span className="list-row__type">
                     {n.notification_type}
                   </span>
+                  {n.room && <span className="list-row__room">#{n.room}</span>}
                   <span className={n.is_read ? "is-read" : ""}>
                     {n.is_read ? "read" : "new"}
                   </span>

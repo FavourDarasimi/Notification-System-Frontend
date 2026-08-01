@@ -434,6 +434,23 @@ body {
   color: var(--color-accent-strong);
 }
 
+.list-row__room {
+  color: var(--color-accent-strong);
+}
+
+.list-row__title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.list-row__title:hover {
+  color: var(--color-accent-strong);
+}
+
 .list-row__meta .is-read {
   color: var(--color-success);
 }
